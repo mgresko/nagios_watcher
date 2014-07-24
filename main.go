@@ -13,11 +13,15 @@ import (
 	"github.com/howeyc/fsnotify"
 )
 
+// command line options
+var OrgPath = flag.String("config-dir", "/etc/nagios.sync", "path to nagios config files")
+var debug = flag.Bool("debug", false, "enable debug logging")
+var refresh_time = flag.Int("refresh", 1, "Number of minutes to wait before restarting")
+var trigger_file = flag.String("trigger", "/etc/nagios.sync/config_fail", "path to trigger file for failed config test")
+var init_file = flag.String("init-file", "/etc/init.d/nagios3", "path to nagios init script")
+
 func main() {
-	OrgPath := flag.String("config-dir", "/etc/nagios.sync", "path to nagios config files")
-	debug := flag.Bool("debug", false, "enable debug logging")
-	refresh_time := flag.Int("refresh", 1, "Number of minutes to wait before restarting")
-	trigger_file := flag.String("trigger", "/etc/nagios.sync/config_fail", "path to trigger file for failed config test")
+	// parse command line args
 	flag.Parse()
 
 	if *debug {
