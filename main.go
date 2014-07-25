@@ -58,7 +58,6 @@ func main() {
 			case <-refresh:
 				counter += 1
 			case <-timer.C:
-				log.Println("timer triggered")
 				if counter > 0 {
 					// Test the nagios config
 					log.Println("Testing config")
