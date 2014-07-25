@@ -15,7 +15,7 @@ import (
 
 // command line options
 var OrgPath = flag.String("config-dir", "/etc/nagios.sync", "path to nagios config files")
-var debug = flag.Bool("debug", false, "enable debug logging")
+var dryrun = flag.Bool("dryrun", false, "enable dry-run (doesn't actually restart nagios)")
 var refresh_time = flag.Int("refresh", 1, "Number of minutes to wait before restarting")
 var trigger_file = flag.String("trigger", "/etc/nagios.sync/config_fail", "path to trigger file for failed config test")
 var init_file = flag.String("init-file", "/etc/init.d/nagios3", "path to nagios init script")
@@ -23,10 +23,6 @@ var init_file = flag.String("init-file", "/etc/init.d/nagios3", "path to nagios 
 func main() {
 	// parse command line args
 	flag.Parse()
-
-	if *debug {
-		log.Println("debug logging enabled")
-	}
 
 	// setup watcher
 	watcher, err := fsnotify.NewWatcher()
@@ -81,9 +77,11 @@ func main() {
 							}
 						}
 						log.Println("Restarting Nagios")
-						out, err = NagiosRestart()
-						if err != nil {
-							log.Printf("Failed to restart Nagios: %s\n", err)
+						if !*dryrun {
+							out, err = NagiosRestart()
+							if err != nil {
+								log.Printf("Failed to restart Nagios: %s\n", err)
+							}
 						}
 					}
 					// reset counter
