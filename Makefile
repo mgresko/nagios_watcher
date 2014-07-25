@@ -3,9 +3,11 @@ BUILD=$(shell git rev-list --count HEAD)
 
 dpkg:
 	mkdir -p deb/nagios_watcher/usr/local/bin
-	mkdir -p deb/nagios_watcher/etc/init.d
+	mkdir -p deb/nagios_watcher/etc/init
+	mkdir -p deb/nagios_watcher/etc/default
 	cp $(GOPATH)/bin/nagios_watcher deb/nagios_watcher/usr/local/bin
-	cp $(GOPATH)/src/nagios_watcher/nagios_watcher.init deb/nagios_watcher/etc/init.d/nagios_watcher
+	cp $(GOPATH)/src/nagios_watcher/nagios_watcher.init deb/nagios_watcher/etc/init/nagios_watcher.conf
+	touch deb/nagios_watcher/etc/default/nagios_watcher
 	fpm -s dir -t deb -n nagios_watcher -v $(VERSION)-$(BUILD) -C deb/nagios_watcher .
 
 build:

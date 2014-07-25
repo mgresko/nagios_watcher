@@ -1,71 +1,15 @@
-# Source function library
-. /lib/lsb/init-functions
+# nagios_watcher - watch nagios config for changes
 
-prog="nagios_watcher"
-RETVAL=0
-PIDFILE=/var/run/$prog.pid
-FLAGS=""
-nagios_watcherd="/usr/local/bin/$prog $FLAGS"
+description "watch nagios config for changes test and restart"
 
-start() {
-        echo -n $"Starting $prog: "
-        nohup su -s /bin/bash nagios -c "$nagios_watcherd" &>>/var/log/nagios_watcher.log &
+start on filesystem
+stop on runlevel[06]
 
-        RETVAL=$?
-        PID=$!
-        echo $PID > $PIDFILE
-        if [ $RETVAL -eq 0 ]; then
-                touch /var/run/$prog
-                log_success_msg
-        else
-                log_failure_msg
-        fi
-        echo
-        return $RETVAL
-}
+respawn
 
-stop() {
-        echo -n $"Stopping $prog: "
-        killproc -p $PIDFILE "$rundeckd"
-        RETVAL=$?
-        echo
-        [ $RETVAL -eq 0 ] && rm -f /var/run/$prog
-        return $RETVAL
-}
+console log
 
-case "$1" in
-        start)
-                start
-                ;;
-        stop)
-                stop
-                ;;
-        force-reload)
-                stop
-                start
-                ;;
-        restart)
-                stop
-                start
-                ;;
-        condrestart)
-                if [ -f /var/run/$prog ]; then
-                        stop
-                        start
-                fi
-                ;;
-        dump-watchers)
-                if [ -f /var/run/$prof ]; then
-                    pkill -USR2 $prog
-                fi
-                ;;
-        status)
-                status_of_proc -p $PIDFILE $DAEMON $prog
-                RETVAL=$?
-                ;;
-        *)
-                echo $"Usage: $0 {start|stop|restart|condrestart|dump-watchers|status}"
-                RETVAL=1
-esac
-
-exit $RETVAL
+script
+    . /etc/default/nagios_watcher
+    exec /usr/local/bin/nagios_watcher $NAGIOS_WATCHER_OPTS
+end script
