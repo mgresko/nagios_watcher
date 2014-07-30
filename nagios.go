@@ -3,7 +3,7 @@ package main
 import "os/exec"
 
 func NagiosTestConfig() ([]byte, error) {
-	cmd := exec.Command(*init_file, "check_config")
+	cmd := exec.Command(*init_file, "check")
 	output, err := cmd.CombinedOutput()
 	return output, err
 }

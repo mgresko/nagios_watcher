@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 var OrgPath = flag.String("config-dir", "/etc/nagios.sync", "path to nagios config files")
 var dryrun = flag.Bool("dryrun", false, "enable dry-run (doesn't actually restart nagios)")
 var refresh_time = flag.Int("refresh", 1, "Number of minutes to wait before restarting")
-var trigger_file = flag.String("trigger", "/etc/nagios.sync/config_fail", "path to trigger file for failed config test")
+var trigger_file = flag.String("trigger", "/tmp/nagios_config_fail", "path to trigger file for failed config test")
 var init_file = flag.String("init-file", "/etc/init.d/nagios3", "path to nagios init script")
 
 func main() {
@@ -113,6 +114,12 @@ func main() {
 			select {
 			case ev := <-watcher.Event:
 				log.Println("event:", ev)
+				// ignore temp files
+				if first_char := strings.Split(ev.Name, ""); string(first_char[0]) == "." {
+					log.Println("skipping temporary file")
+					break
+				}
+
 				if ev.IsDelete() {
 					log.Println("removing watcher: ", ev.Name)
 					watcher.RemoveWatch(ev.Name)
@@ -130,7 +137,7 @@ func main() {
 							log.Fatal(err)
 						}
 					} else {
-						log.Println("Not right")
+						log.Println("Doing nothing")
 					}
 				}
 				refresh <- true
