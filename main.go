@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -17,13 +18,32 @@ import (
 // command line options
 var OrgPath = flag.String("config-dir", "/etc/nagios.sync", "path to nagios config files")
 var dryrun = flag.Bool("dryrun", false, "enable dry-run (doesn't actually restart nagios)")
+var debug = flag.Bool("debug", false, "enable debug to console")
 var refresh_time = flag.Int("refresh", 1, "Number of minutes to wait before restarting")
 var trigger_file = flag.String("trigger", "/tmp/nagios_config_fail", "path to trigger file for failed config test")
 var init_file = flag.String("init-file", "/etc/init.d/nagios3", "path to nagios init script")
+var logfile = flag.String("logfile", "/var/log/nagios_watcher.log", "log file to use")
+
+func setup_logging() *os.File {
+	logf, err := os.OpenFile(*logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal("error opening log file: ", *logfile)
+	}
+	if *debug {
+		multi := io.MultiWriter(logf, os.Stdout)
+		log.SetOutput(multi)
+	} else {
+		log.SetOutput(logf)
+	}
+	return logf
+}
 
 func main() {
 	// parse command line args
 	flag.Parse()
+
+	// setup logging
+	logFile := setup_logging()
 
 	// setup watcher
 	watcher, err := fsnotify.NewWatcher()
@@ -37,14 +57,18 @@ func main() {
 	refresh := make(chan bool, 1)
 
 	// catch USR2 and dump watchers
-	signal.Notify(sigs, syscall.SIGUSR2)
+	signal.Notify(sigs, syscall.SIGUSR2, syscall.SIGHUP)
 
 	go func() {
-		for {
-			select {
-			case sig := <-sigs:
+		for sig := range sigs {
+			switch sig {
+			case syscall.SIGUSR2:
 				log.Println("Dumping watchers: ", sig)
 				log.Printf("\n%v\n", watcher)
+			case syscall.SIGHUP:
+				log.Println("Reloading log file")
+				logFile.Close()
+				logFile = setup_logging()
 			}
 		}
 	}()
