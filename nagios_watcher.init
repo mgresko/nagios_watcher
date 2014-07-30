@@ -7,8 +7,6 @@ stop on runlevel[06]
 
 respawn
 
-console log
-
 script
     . /etc/default/nagios_watcher
     exec /usr/local/bin/nagios_watcher $NAGIOS_WATCHER_OPTS
