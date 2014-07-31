@@ -139,7 +139,13 @@ func main() {
 			case ev := <-watcher.Event:
 				log.Println("event:", ev)
 				// ignore temp files
-				if first_char := strings.Split(ev.Name, ""); string(first_char[0]) == "." {
+				// get the file name without path
+				_, filename := filepath.Split(ev.Name)
+				// get the file name extension
+				ext := filepath.Ext(filename)
+				// get the first character from file name
+				leading_char := string(strings.Split(filename, "")[0])
+				if (ext != ".cfg") && (leading_char == ".") {
 					log.Println("skipping temporary file")
 					break
 				}
